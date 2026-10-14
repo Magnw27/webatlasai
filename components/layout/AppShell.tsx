@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -17,9 +18,7 @@ const NAV = [
 
 function BrandMark() {
   return (
-    <span aria-hidden="true" className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-blue-600 to-cyan-500 text-xs font-black tracking-tight text-white shadow-sm">
-      WA
-    </span>
+    <Image src="/brand/webatlas-mark.svg" alt="" width={38} height={38} priority className="h-9 w-9 shrink-0" />
   );
 }
 

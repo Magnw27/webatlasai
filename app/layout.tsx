@@ -10,6 +10,17 @@ export const metadata: Metadata = {
   },
   description: "Search the live web, collect reliable sources, and use AI to turn research into evidence you can verify.",
   applicationName: "WebAtlas AI",
+  icons: {
+    icon: [{ url: "/icon.svg", type: "image/svg+xml" }],
+    shortcut: "/icon.svg",
+    apple: "/icon.svg",
+  },
+  openGraph: {
+    title: "WebAtlas AI — Search beyond the obvious",
+    description: "Search the web, explore visual topics, and turn useful sources into research with AI.",
+    siteName: "WebAtlas AI",
+    type: "website",
+  },
   robots: { index: true, follow: true },
 };
 
