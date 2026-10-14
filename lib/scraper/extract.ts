@@ -22,8 +22,8 @@ function isPublicAddress(address: string): boolean {
   const version = isIP(address);
   if (version === 4) {
     const octets = address.split(".").map(Number);
-    const [a, b, c] = octets;
     if (octets.length !== 4 || octets.some((part) => part < 0 || part > 255)) return false;
+    const [a, b, c] = octets as [number, number, number, number];
     if (
       a === 0 || a === 10 || a === 127 || a >= 224 ||
       (a === 100 && b >= 64 && b <= 127) ||
