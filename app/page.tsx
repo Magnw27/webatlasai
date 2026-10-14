@@ -20,13 +20,17 @@ export default function HomePage() {
   const [error, setError] = useState<string | null>(null);
   const [notConfigured, setNotConfigured] = useState(false);
   const [searched, setSearched] = useState(false);
+  const [restored, setRestored] = useState(false);
   const [elapsed, setElapsed] = useState<number | null>(null);
 
   useEffect(() => {
-    if (!hydrated || !query) return;
-    setInput(query);
-    setSearched(results.length > 0);
-  }, [hydrated, query, results.length]);
+    if (!hydrated || restored) return;
+    if (query) {
+      setInput(query);
+      setSearched(true);
+    }
+    setRestored(true);
+  }, [hydrated, restored, query]);
 
   async function submit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
