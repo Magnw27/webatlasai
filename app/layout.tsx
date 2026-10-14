@@ -4,18 +4,24 @@ import { AppShell } from "@/components/layout/AppShell";
 import { SessionProvider } from "@/components/session/SessionProvider";
 
 export const metadata: Metadata = {
-  title: "WebAtlas AI",
-  description: "Find it. Understand it. Verify it. A web search and research workspace.",
+  title: {
+    default: "WebAtlas AI — Search the web, understand the evidence",
+    template: "%s | WebAtlas AI",
+  },
+  description: "Search the live web, collect reliable sources, and use AI to turn research into evidence you can verify.",
+  applicationName: "WebAtlas AI",
+  robots: { index: true, follow: true },
 };
 
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
+  themeColor: "#ffffff",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="id">
       <body>
         <SessionProvider>
           <AppShell>{children}</AppShell>
