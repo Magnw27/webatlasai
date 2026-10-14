@@ -5,6 +5,18 @@ export interface AiOutcome {
   message: AssistantMessage;
 }
 
+type ProviderPayload = {
+  choices?: {
+    message?: {
+      content?: string | Array<{ type?: string; text?: string }>;
+    };
+    delta?: {
+      content?: string | Array<{ type?: string; text?: string }>;
+    };
+  }[];
+  error?: { message?: string } | string;
+};
+
 const SYSTEM = [
   "You are the WebAtlas research assistant.",
   "Only use the provided source context. Never invent sources, URLs, numbers, or claims.",
@@ -20,6 +32,102 @@ function buildContext(sources: ExtractedSource[]): string {
     .slice(0, 10)
     .map((s, i) => `[${i + 1}] ${s.title}\nURL: ${s.url}\n${s.text.slice(0, 4000)}`)
     .join("\n\n---\n\n");
+}
+
+/**
+ * Some OpenAI-compatible gateways append another JSON object, emit JSONL,
+ * or wrap the response in SSE data lines. Response.json() rejects these with
+ * "Unexpected non-whitespace character after JSON". Extract complete JSON
+ * values and select the first OpenAI-compatible chat-completion payload.
+ */
+function parseProviderPayload(raw: string): ProviderPayload {
+  const text = raw.trim();
+  if (!text) throw new Error("AI provider returned an empty HTTP response.");
+
+  const candidates: ProviderPayload[] = [];
+  const tryParse = (value: string) => {
+    const candidate = value.trim();
+    if (!candidate || candidate === "[DONE]") return;
+    try {
+      const parsed: unknown = JSON.parse(candidate);
+      if (parsed && typeof parsed === "object") candidates.push(parsed as ProviderPayload);
+    } catch {
+      // Try the next JSON value or SSE data line.
+    }
+  };
+
+  // Standard JSON response.
+  tryParse(text);
+
+  // Server-sent events / JSONL, including gateways that stream despite
+  // not setting the correct content-type.
+  for (const line of text.split(/\r?\n/)) {
+    const trimmed = line.trim();
+    if (trimmed.startsWith("data:")) tryParse(trimmed.slice(5));
+    else if (trimmed.startsWith("{") || trimmed.startsWith("[")) tryParse(trimmed);
+  }
+
+  // Find adjacent JSON objects in a single response body.
+  let start = -1;
+  let depth = 0;
+  let inString = false;
+  let escaped = false;
+  for (let i = 0; i < text.length; i += 1) {
+    const char = text[i];
+    if (inString) {
+      if (escaped) escaped = false;
+      else if (char === "\\\\") escaped = true;
+      else if (char === '"') inString = false;
+      continue;
+    }
+    if (char === '"') {
+      inString = true;
+      continue;
+    }
+    if (char === "{" || char === "[") {
+      if (depth === 0) start = i;
+      depth += 1;
+    } else if (char === "}" || char === "]") {
+      depth -= 1;
+      if (depth === 0 && start >= 0) {
+        tryParse(text.slice(start, i + 1));
+        start = -1;
+      }
+    }
+  }
+
+  const payload = candidates.find((candidate) => Array.isArray(candidate.choices));
+  if (payload) return payload;
+
+  const providerError = candidates.find((candidate) => candidate.error);
+  if (providerError?.error) {
+    const detail = typeof providerError.error === "string"
+      ? providerError.error
+      : providerError.error.message;
+    throw new Error(detail || "AI provider returned an error.");
+  }
+
+  throw new Error(
+    "AI provider returned an unreadable response. Check AI_BASE_URL and ensure the endpoint returns OpenAI-compatible /chat/completions JSON.",
+  );
+}
+
+function getText(content: unknown): string {
+  if (typeof content === "string") return content;
+  if (Array.isArray(content)) {
+    return content
+      .map((part) => {
+        if (typeof part === "string") return part;
+        if (part && typeof part === "object" && "text" in part) {
+          const text = (part as { text?: unknown }).text;
+          return typeof text === "string" ? text : "";
+        }
+        return "";
+      })
+      .filter(Boolean)
+      .join("\n");
+  }
+  return "";
 }
 
 export function aiConfigured(): boolean {
@@ -74,26 +182,35 @@ export async function askAssistant(
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${apiKey}`,
+        Accept: "application/json, text/event-stream",
       },
-      body: JSON.stringify({ model, messages, temperature: 0.2 }),
+      body: JSON.stringify({ model, messages, temperature: 0.2, stream: false }),
       signal: controller.signal,
     });
 
+    const raw = await res.text();
     if (!res.ok) {
-      if (res.status === 401 || res.status === 403) throw new Error("AI provider rejected the API key. Check AI_API_KEY.");
-      if (res.status === 429) throw new Error("AI provider rate limit reached. Wait a moment or try another model.");
-      throw new Error(`AI provider responded with HTTP ${res.status}.`);
+      if (res.status === 401 || res.status === 403) {
+        throw new Error("AI provider rejected the API key. Check AI_API_KEY.");
+      }
+      if (res.status === 429) {
+        throw new Error("AI provider rate limit reached. Wait a moment or try another model.");
+      }
+      let detail = "";
+      try {
+        const errorPayload = JSON.parse(raw) as ProviderPayload;
+        detail = typeof errorPayload.error === "string"
+          ? errorPayload.error
+          : errorPayload.error?.message ?? "";
+      } catch {
+        detail = raw.slice(0, 240).replace(/\s+/g, " ");
+      }
+      throw new Error(`AI provider responded with HTTP ${res.status}.${detail ? ` ${detail}` : ""}`);
     }
 
-    const data = (await res.json()) as {
-      choices?: { message?: { content?: string | Array<{ type?: string; text?: string }> } }[];
-    };
-    const rawContent = data.choices?.[0]?.message?.content;
-    const content = (typeof rawContent === "string"
-      ? rawContent
-      : Array.isArray(rawContent)
-        ? rawContent.map((part) => part.text ?? "").join("\n")
-        : "").trim();
+    const data = parseProviderPayload(raw);
+    const firstChoice = data.choices?.[0];
+    const content = getText(firstChoice?.message?.content ?? firstChoice?.delta?.content).trim();
 
     if (!content) {
       throw new Error("AI provider returned an empty response. Check that the selected model supports chat completions.");
