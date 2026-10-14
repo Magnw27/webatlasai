@@ -74,9 +74,6 @@ export function AssistantPanel({
         throw new Error(data.error ?? "The assistant could not respond.");
       }
       addMessage(data.message);
-      if (data.available === false) {
-        setError("AI provider belum aktif. Buka Settings untuk memeriksa konfigurasi server.");
-      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "The assistant could not respond.");
     } finally {
