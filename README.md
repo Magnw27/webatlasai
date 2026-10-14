@@ -63,14 +63,13 @@ npm run test       # Vitest
 npm run build      # Production build
 ```
 
-## Design notes
+## Experience and safety
 
-- Restrained glass/prism style: soft translucency, thin borders, rounded shapes,
-  readable contrast. No heavy gradients or glow.
-- Mobile is a first-class target: no horizontal overflow, long URLs wrap, tables
-  scroll only inside a bounded region, the assistant opens as a panel.
-- Accessibility: semantic HTML, labelled controls, visible focus, reduced-motion
-  support.
+- Search-first homepage with a minimal, responsive layout and quick access to AI research.
+- Search results must come from the configured provider; missing configuration and failures are shown honestly.
+- Extracted pages are treated as untrusted evidence. Redirects and resolved addresses are checked to reduce SSRF risk, and response bodies are size-limited.
+- Mobile is a first-class target: no horizontal overflow, long URLs wrap, tables scroll only inside a bounded region, and the assistant opens as a panel.
+- Accessibility: semantic HTML, labelled controls, visible focus, reduced-motion support, and clear loading/error states.
 
 ## Honesty rules
 
