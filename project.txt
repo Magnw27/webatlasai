@@ -1,0 +1,247 @@
+WEBATLAS AI — PROJECT EXECUTION FLOW
+Version: 0.1
+Status: Experimental / Free-first
+
+CORE PRINCIPLE
+Search first. Evidence first. AI when useful.
+
+1. INSTRUCTIONS FOR THE CODING AGENT
+Read this entire file before changing code. Build WebAtlas AI as a web search and research workspace, not a generic AI dashboard.
+
+Non-negotiable rules:
+- Work one phase at a time. Do not skip phases.
+- Inspect the existing repository before modifying files. Preserve useful work and existing conventions.
+- Keep dependencies minimal and document important technical decisions.
+- Never put API keys, tokens, or secrets in source code or commit them to Git.
+- Never fabricate search results, citations, URLs, numbers, statistics, or claims.
+- Clearly label demo data as demo data.
+- Keep source URLs attached to research findings and extracted data.
+- Do not bypass authentication, CAPTCHA, paywalls, access controls, or applicable site restrictions.
+- Do not build aggressive/high-volume crawling for v0.1.
+- Use semantic HTML and accessible controls.
+- Test mobile layouts before declaring UI work complete.
+- Run applicable lint, typecheck, tests, and production build; never claim a check passed unless it actually ran.
+- Keep the app useful when AI is unavailable.
+- If a decision is ambiguous or risky, document the options and ask rather than guessing.
+- Leave the repository runnable after each phase.
+
+2. PRODUCT DEFINITION
+WebAtlas AI is a web search and research workspace. Users can search for a topic, discover relevant web sources, inspect source details, extract useful information into structured data, view tables and appropriate charts, ask an optional AI assistant to explain or compare research, and return to previous research.
+
+It is not primarily a chatbot. Main flow:
+Search → Sources → Research → Data → Optional AI.
+
+3. V0.1 SCOPE
+Required:
+- Search input and submit action.
+- Loading, empty, and error states.
+- Search results with title, domain, URL, snippet when available, and open-source action.
+- Research summary and key findings with source attribution.
+- Structured data table when available, preserving source references.
+- Dashboard, Search, Research, Data, History, and Settings navigation.
+- Optional AI Assistant, closed by default.
+- Responsive layouts for mobile, tablet, and desktop.
+
+Defer for now:
+- Large-scale or 24/7 crawling.
+- Paid proxies, payment systems, public API marketplace, complex multi-agent systems.
+- CAPTCHA or access-control bypass.
+- Expensive GPU infrastructure and complex recommendation engines.
+- Fake live statistics or features that require paid infrastructure before the MVP proves useful.
+
+4. DESIGN DIRECTION — RESTRAINED GLASS / PRISM
+The product should look like a polished research/search product with a subtle glass interface, not a generic AI-generated dashboard.
+
+Use:
+- Soft translucency only where it helps layer separation.
+- Subtle blur and thin borders.
+- Gentle shadows and restrained cool accent colors.
+- Rounded shapes, readable typography, generous whitespace, clear hierarchy.
+- Strong contrast and obvious interactive states.
+
+Avoid:
+- Bright gradients, heavy glow, neon overload, animated backgrounds, excessive transparency, excessive shadows, decorative sparkles, and cards around every item.
+- Visual effects that make text hard to read or cause performance issues.
+
+Performance rule: if an effect looks good on desktop but slows mobile, reduce or remove it. Content and usability always beat decoration.
+
+5. ROUNDED UI PRINCIPLE
+Avoid rigid rectangular boxes everywhere. Prefer rounded search fields, pill controls where appropriate, softly rounded result surfaces, rounded table containers, and subtle section boundaries. Do not turn every element into a pill: controls and content still need distinct shapes and hierarchy. The interface should feel varied and organic, not like floating bubbles.
+
+6. MOBILE-FIRST REQUIREMENTS
+Mobile is a first-class target, not a later patch.
+- No horizontal page overflow.
+- Search input must be easy to use on small screens.
+- Comfortable touch targets and readable text.
+- Sidebar becomes compact navigation or a menu.
+- Tables must adapt; do not blindly overflow the viewport. Use responsive columns, horizontal table scrolling only inside a clearly bounded region, or a suitable stacked presentation.
+- Long URLs must wrap or truncate safely.
+- AI Assistant opens as a bottom sheet or full-screen panel on mobile.
+- Avoid heavy blur, unnecessary animation, hover-dependent actions, and layout shifts.
+- Respect safe areas where applicable.
+- Keep primary actions visible.
+
+When space is limited, prioritize: Search, Results, Sources, Research content, Data, Secondary controls, Decorative effects.
+
+7. ACCESSIBILITY
+Support keyboard navigation, visible focus, semantic HTML, adequate contrast, meaningful button labels, form labels, reduced-motion preferences where relevant, and screen-reader-friendly navigation. Do not rely on color alone to communicate status.
+
+8. INFORMATION ARCHITECTURE
+Dashboard: main search, recent research, quick actions.
+Search: query input, results, source details.
+Research: summary, key findings, sources, optional AI assistant.
+Data: structured table, basic controls, source references.
+History: previous searches and research.
+Settings: only settings that are actually needed.
+
+9. AI ASSISTANT BEHAVIOR
+Closed by default. User opens it using an “AI Assistant” control.
+Example actions: explain this result, compare these sources, summarize this table, identify patterns, identify missing information.
+The assistant must use supplied source context, distinguish facts from inference, admit uncertainty, and never fabricate sources or pretend it browsed data it did not receive. It must never block the main research workflow.
+
+10. TECHNICAL DIRECTION
+Preferred starting stack:
+- Next.js + TypeScript for the web app.
+- Vercel Free for initial deployment, subject to current platform limits.
+- Lightweight server-side/API functionality initially.
+- PostgreSQL free tier only if persistent storage is needed.
+- Limited, responsible source extraction.
+- AI abstraction layer so providers/models can be swapped without rewriting the app.
+
+Do not assume all third-party services or model hosting are free forever. Avoid requiring paid infrastructure for the first experiment.
+
+11. SUGGESTED PROJECT STRUCTURE
+webatlas-ai/
+  app/
+    page.tsx
+    search/
+    research/
+    data/
+    history/
+    settings/
+  components/
+    layout/
+    search/
+    research/
+    data/
+    ai/
+  lib/
+    search/
+    scraper/
+    ai/
+    database/
+  types/
+  public/
+  tests/
+  docs/
+  .env.example
+  README.md
+  package.json
+
+The agent may change this structure for a documented technical reason.
+
+12. DEVELOPMENT PHASES
+
+PHASE 0 — REPOSITORY INSPECTION
+Before editing anything:
+- Inspect repository and Git status.
+- Identify framework, package manager, scripts, documentation, and existing features.
+- Identify files relevant to the first phase.
+- Do not delete or overwrite useful work.
+Acceptance: report current stack, project state, important files, and proposed Phase 1 changes. Then stop and wait if a human decision is needed.
+
+PHASE 1 — FOUNDATION
+- Set up Next.js + TypeScript only if needed.
+- Establish basic project structure, linting, formatting, environment configuration, base layout, README, and error-handling approach.
+Acceptance: app runs locally; production build and typecheck pass; no secrets committed; no obvious console errors.
+
+PHASE 2 — UI FOUNDATION
+- Build navigation/sidebar, search bar, Dashboard, Search, Research, Data, History, Settings, responsive layout, loading/empty/error states, and optional AI Assistant panel.
+- Use clearly labelled demo data only.
+Acceptance: restrained glass style; rounded visual language; readable contrast; no excessive glow/gradients; no unnecessary cards; mobile, tablet, and desktop layouts verified. Visually inspect before continuing.
+
+PHASE 3 — SEARCH
+- Implement query handling, a real search provider integration, result normalization, source display, URL handling, loading, error handling, and empty results.
+Acceptance: user can submit a query, receive actual results, identify sources, and open source pages. Never fabricate results if the provider fails. Document provider limits and any required API key.
+
+PHASE 4 — SOURCE EXTRACTION
+- Process permitted public URLs, extract useful text, clean and normalize content, track source URL and retrieval timestamp where useful, and deduplicate basic repeats.
+Acceptance: an allowed public source can be processed and displayed without losing attribution.
+
+PHASE 5 — STRUCTURED DATA
+- Define data schemas, normalize fields, display tables, add basic sorting/filtering only when useful, and preserve source references.
+Acceptance: structured data is readable and traceable; precision is not overstated.
+
+PHASE 6 — AI RESEARCH
+- Add AI provider abstraction, context preparation, source-aware prompts, summaries, key findings, source mapping, and uncertainty handling.
+Acceptance: AI output is based on supplied source context. Make source facts, AI summaries, and AI inferences distinguishable.
+
+PHASE 7 — VISUALIZATION
+- Add charts or diagrams only when the available data supports them. Provide meaningful labels, mobile readability, source context, and access to underlying data.
+Acceptance: each visualization is useful, understandable, and traceable. Do not make a chart merely because a chart library exists.
+
+PHASE 8 — AI ASSISTANT PANEL
+- Desktop: optional right-side panel. Mobile: bottom sheet or full-screen panel. Include open/close, loading, error, empty states, and context-aware questions.
+Acceptance: assistant stays secondary and never blocks research.
+
+PHASE 9 — POLISH AND HARDENING
+Review accessibility, mobile/desktop performance, keyboard navigation, errors, security, dependency/bundle size, loading behavior, responsive tables, reduced motion, and UI consistency. Remove unnecessary visual effects.
+Acceptance: no known critical issues; relevant tests and build pass; mobile has been checked manually.
+
+PHASE 10 — DEPLOYMENT
+Target Vercel Free for the experiment.
+Before deployment, verify production build, environment variables, secret handling, source links, error handling, mobile layout, and README deployment instructions. Document platform limits and any feature that requires an external service.
+
+13. RESPONSIBLE SCRAPING RULES
+- Respect applicable robots.txt rules, site terms, and access policies.
+- Do not bypass CAPTCHA, authentication, paywalls, or access controls.
+- Use reasonable request rates and avoid unnecessary requests.
+- Cache when appropriate.
+- Collect only information necessary for the research task.
+- Avoid unnecessary collection of personal data.
+- Preserve source URLs and retrieval times where useful.
+
+14. TESTING RULES
+For each phase, run applicable checks, such as:
+- lint
+- typecheck
+- test
+- build
+Also inspect UI manually on mobile, tablet, and desktop when UI changes. A feature is not complete merely because the code compiles.
+
+15. DEFINITION OF DONE
+A phase is complete only when implementation is done, acceptance criteria pass, responsive behavior is checked, relevant tests pass, build succeeds, no critical errors remain, documentation is updated where needed, and prior features still work.
+
+16. AGENT REPORT FORMAT
+At the end of each phase, report:
+
+PHASE: <number and name>
+COMPLETED:
+- ...
+FILES CHANGED:
+- ...
+VERIFICATION:
+- lint: PASS/FAIL/NOT RUN
+- typecheck: PASS/FAIL/NOT RUN
+- test: PASS/FAIL/N/A
+- build: PASS/FAIL/NOT RUN
+UI CHECK:
+- mobile: PASS/FAIL/NOT APPLICABLE
+- tablet: PASS/FAIL/NOT APPLICABLE
+- desktop: PASS/FAIL/NOT APPLICABLE
+ISSUES:
+- ...
+NEXT PHASE:
+- ...
+
+Never claim PASS unless the relevant check actually ran.
+
+17. EXECUTION RULE
+Start with PHASE 0 — REPOSITORY INSPECTION. Do not immediately build the entire app. After inspection, explain the current repository state and proposed Phase 1 changes. Wait for approval when a human decision is required. If no decision is required, proceed only to the next explicitly authorized phase.
+
+18. PRODUCT NORTH STAR
+Search → Sources → Research → Structured Data → Visualization → Optional AI Assistance.
+
+WebAtlas AI helps people find, understand, and verify information. It must not pretend to know everything, hide sources, or sacrifice usability for visual effects.
+
+Tagline: Find it. Understand it. Verify it.
