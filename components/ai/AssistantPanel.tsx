@@ -11,6 +11,60 @@ const SUGGESTIONS = [
   "List the key numbers with sources",
 ];
 
+type ApiReply = {
+  message?: AssistantMessage;
+  error?: string;
+  available?: boolean;
+};
+
+function parseApiReply(raw: string, status: number): ApiReply {
+  const text = raw.trim();
+  if (!text) {
+    throw new Error(`Server returned an empty response (HTTP ${status}). Please try again.`);
+  }
+
+  try {
+    return JSON.parse(text) as ApiReply;
+  } catch {
+    // Be defensive about reverse proxies that append a second JSON value.
+    let depth = 0;
+    let start = -1;
+    let inString = false;
+    let escaped = false;
+
+    for (let i = 0; i < text.length; i += 1) {
+      const char = text[i];
+      if (inString) {
+        if (escaped) escaped = false;
+        else if (char === "\\\\") escaped = true;
+        else if (char === '"') inString = false;
+        continue;
+      }
+      if (char === '"') {
+        inString = true;
+        continue;
+      }
+      if (char === "{") {
+        if (depth === 0) start = i;
+        depth += 1;
+      } else if (char === "}") {
+        depth -= 1;
+        if (depth === 0 && start >= 0) {
+          try {
+            return JSON.parse(text.slice(start, i + 1)) as ApiReply;
+          } catch {
+            start = -1;
+          }
+        }
+      }
+    }
+
+    throw new Error(
+      `Server returned an invalid response (HTTP ${status}). Check the AI endpoint or deployment logs and try again.`,
+    );
+  }
+}
+
 export function AssistantPanel({
   open,
   onClose,
@@ -69,9 +123,10 @@ export function AssistantPanel({
           history: assistant.slice(-6),
         }),
       });
-      const data = (await res.json()) as { message?: AssistantMessage; error?: string; available?: boolean };
+      const raw = await res.text();
+      const data = parseApiReply(raw, res.status);
       if (!res.ok || !data.message) {
-        throw new Error(data.error ?? "The assistant could not respond.");
+        throw new Error(data.error ?? `The assistant could not respond (HTTP ${res.status}).`);
       }
       addMessage(data.message);
     } catch (err) {
