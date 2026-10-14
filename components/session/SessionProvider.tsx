@@ -17,6 +17,7 @@ interface SessionApi extends SessionState {
   setResults: (results: SearchResult[]) => void;
   addSource: (source: ExtractedSource) => void;
   addMessage: (message: AssistantMessage) => void;
+  clearAssistant: () => void;
   reset: () => void;
 }
 
@@ -60,14 +61,18 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     setState((s) => ({ ...s, assistant: [...s.assistant, message] }));
   }, []);
 
+  const clearAssistant = useCallback(() => {
+    setState((s) => ({ ...s, assistant: [] }));
+  }, []);
+
   const reset = useCallback(() => {
     clearSession();
     setState({ query: "", results: [], sources: [], assistant: [] });
   }, []);
 
   const value = useMemo<SessionApi>(
-    () => ({ ...state, hydrated, setQuery, setResults, addSource, addMessage, reset }),
-    [state, hydrated, setQuery, setResults, addSource, addMessage, reset],
+    () => ({ ...state, hydrated, setQuery, setResults, addSource, addMessage, clearAssistant, reset }),
+    [state, hydrated, setQuery, setResults, addSource, addMessage, clearAssistant, reset],
   );
 
   return <SessionContext.Provider value={value}>{children}</SessionContext.Provider>;
